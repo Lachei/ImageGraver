@@ -9,18 +9,21 @@ The program only relies on javascript for dataprocessing and thus runs fully in 
 
 Tool supports conversion of color images to heightfields, 2d/3d heightfield inspection, basic image operations on the heightfield and gcode export for cnc routers.
 
-For usage read the not yet finished user docs .... TODO: link to docs
+For usage read the not yet finished [user docs](https://github.com/Lachei/ImageGraver/wiki)
 
 ## License
 
 The program is published under the MIT License and is free to use and adpot. No guarantees given!
 
-Retrieve a copy of the license here...
+Retrieve a copy of the license [here](LICENSE).
 
 ## Usage
 
-To use the website with internet connection simply click here TODO: link to website viewer.
+To use the website with internet connection simply click [here](https://htmlpreview.github.io/?https://github.com/Lachei/ImageGraver/blob/master/ImageGraver.html).
 
-If no internet connection can be established simply download all source files by clicking the download as `.zip` button TODO image showing this,
+If no internet connection can be established simply download all source files by either clicking [here](https://github.com/Lachei/ImageGraver/archive/refs/heads/master.zip), 
 
-unpack the downloaded `.zip` file and double click on ImageGraver.html. The website should then be opened in your browser.
+or clicking the download as `.zip` button.
+![Download zip](images/download_zip.png)
+
+Unpack the downloaded `.zip` file and double click on ImageGraver.html. The website should then be opened in your browser.
