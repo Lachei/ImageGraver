@@ -1,7 +1,7 @@
 # Image Graver
 
 |![overviewImage](images/overview.png)|
--
+| ------ |
 
 Image Graver is an open source tool to convert images to 3d reliefs and create g-code routing information to be used with cnc routers.
 
