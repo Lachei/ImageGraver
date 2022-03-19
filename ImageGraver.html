@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Image Graver Program</title>
+        <!--<script src="https://docs.opencv.org/4.5.4/opencv.js" type="text/javascript"></script>-->
+        <script src="opencv.js" type="text/javascript"></script>
+        <script src="https://cdn.plot.ly/plotly-2.8.3.min.js"></script>
+        <link href = "ImageGraver.css" rel = "stylesheet" type="text/css"/>
+    </head>
+    <body>
+        <div id = "mainDiv">
+            <h1>Image Graver</h1>
+            <p>
+                Programm to convert images (rgb as well as greyscale images) to a heightmap and generate gcode to be executed by a cnc router. Program is published under MIT license.
+            </p>
+            <div class = "tableDiv tableGrid">
+                <!--Side panel/Settings column-->
+                <div id = "sidePanell" class = "cellLeft sidePanel">
+                    <p>Open Image:</p>
+                    <input type = "file" id = "fileInput" name = "file" accept = "image/*" />
+                    <hr class = "dashed">
+                    <p>Engrave settings:</p>
+                    <p>
+                        <input type = "number" id= "whValue" name = "whValue" min = "0" value = "200">
+                        <label for="whValue">mm</label>
+                        <input type = "radio" id = "widthSelector" value = "width" name = "whSelector" checked>
+                        <label for="width">Width</label>
+                        <input type = "radio" id = "heightSelector" value = "height" name = "whSelector">
+                        <label for="height">Height</label>
+                        <br>
+                        <input type = "number" id = "depthValue" name = "depthValue" min = "0" value = "10">
+                        <label for = "depthValue">mm Depth</label><br>
+                        <input type = "number" id = "safeHeight" name = "safeHeight" min = "0" value = "5">
+                        <label for = "safeHeight">mm Safe Height</label><br>
+                        <input type = "number" id = "graveSpeed" name = "graveSpeed" min = "0" value = "1200">
+                        <label for = "graveSpeed">mm/min Engrave speed</label><br>
+                    </p>
+                    <p>
+                        <select name = "vertStart" id = "vertStart">
+                            <option value = "top">top</option>
+                            <option value = "mid" selected = "selected">mid</option>
+                            <option value = "bot">bot</option>
+                        </select>
+                        <label for="vertStart">Vertical start</label><br>
+                        <select name = "horStart" id = "horStart">
+                            <option value = "left">left</option>
+                            <option value = "mid" selected = "selected">mid</option>
+                            <option value = "right">right</option>
+                        </select>
+                        <label for="horStart">Horizontal start</label><br>
+                    </p>
+                    
+                    <hr class = "dashed">
+                    <p>Add command to commands queue:</p>
+                    <button type = "button" id = "cmdConvertToGrey" onclick = "addCommand('cmdConvertToGrey')">Convert to grey</button><br>
+                    <button type = "button" id = "cmdResize" onclick = "addCommand('cmdResize')">Resize</button><br>
+                    <button type = "button" id = "cmdSmoothImage" onclick = "addCommand('cmdSmoothImage')">Smooth image</button><br>
+                    <button type = "button" id = "cmdNormalizeImage" onclick = "addCommand('cmdNormalizeImage')">Normalize image</button><br>
+                    <button type = "button" id = "cmdInvertImage" onclick = "addCommand('cmdInvertImage')">Invert image</button><br>
+                    <button type = "button" id = "cmdColorTransformImage" onclick = "addCommand('cmdColorTransformImage')">Color Transform image</button><br>
+                    <button type = "button" id = "cmdHistEqualizationImage" onclick = "addCommand('cmdHistEqualizationImage')">Histogram equalize image</button><br>
+                    <button type = "button" id = "cmdCreateGcode" onclick = "addCommand('cmdCreateGcode')">Create Gcode</button><br>
+                    <hr class = "dashed">
+                    <p>Inspector:</p>
+                    <div id = "inspectorDiv"></div>
+                </div> 
+                <!--Main view/canvas column-->
+                <div id = "mainViewPanelCommands" class = "cellMiddleTop">
+                    <p>Commands queue (right click for delete, left click to select and edit settings):</p>
+                    <div id = "commandsQueuePanel"></div>
+                    <div id = "commandsLoadPanel"></div>
+                </div>
+                <div id = "mainViewPanelImages" class = "cellMiddleBot">
+                    <button type = "button" id = "View2dButton" class = "selectedButton" onclick = "setImageView('2D')">2D</button>
+                    <button type = "button" id = "View3dButton" class = "deselectedButton" onclick = "setImageView('3D')">3D</button>
+                    <div id = "imagePanel">
+                        <div id = "plotlyDiv" class = "noShow imageHeight">
+                            <canvas id = "canvas3d" class = "fill"></canvas>
+                        </div>
+                        <canvas id = "mainCanvas" class = "noShow imageHeight"></canvas>
+                    </div>
+                </div>
+                <!--Tools view-->
+                <div class = "cellRight sidePanel">
+                    <p>Tools:</p>
+                    <div id = "toolsDiv">
+                    </div>
+                    <hr class = "dashed">
+                    <p>New Tool:</p>
+                    <input type = "text" id = "newToolName" name = "newToolName"><label for = "newToolName">Name</label><br>
+                    <select name = "newToolType" id = "newToolType">
+                        <option value = "Ball">Ball</option>
+                        <option value = "Endmill">Endmill</option>
+                        <option value = "V-Bit">V-Bit</option>
+                    </select><label for = "newToolType">Tool type</label><br>
+                    <input type = "number" id = "newToolWidth" name = "newToolWidth" min = "0" value = "3"><label for = "newToolWidth">mm Diameter</label><br>
+                    <input type = "number" id = "newToolAngle" name = "newToolAngle" min = "0" value = "45"><label for = "newToolAngle">° Angle</label><br>
+                    <button type = "button" id = "newToolButton" onclick = "addTool()">Add Tool</button>
+                    <hr class = "dashed">
+                    <button type = "button" id = "clearStorage" onclick = "clearTools()">Clear custom tools</button>
+                </div>
+            </div>
+        </div>
+    </body>
+    <script type = "text/javascript" src = "matrix.js"></script>
+    <script type = "text/javascript" src = "webgl.js"></script>
+    <script type = "text/javascript" src = "Gcode.js"></script>
+    <script type = "text/javascript" src = "bridged-worker.js"></script>
+    <script type = "text/javascript" src = "Selectable.js"></script>
+    <script type = "text/javascript" src = "Tools.js"></script>
+    <script type = "text/javascript" src = "Paths.js"></script>
+    <script type = "text/javascript" src = "ImageGraver.js"></script>
+    <footer>
+
+    </footer>
+</html>
