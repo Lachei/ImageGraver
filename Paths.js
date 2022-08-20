@@ -93,56 +93,59 @@ function postProcessPath(path, postProcessParameters){
     let depth = postProcessParameters.depth;
     if(depth > 0) depth *= -1;
     let stepDown = postProcessParameters.stepdown;
-    if(stepDown < 0) stepDown += -1;
-    let finalPoints = [path[0]];                                        //add the first vertex of the path as default NOTE: might be wrong
+    if(stepDown < 0) stepDown *= -1;
+    let finalPoints = [];
     let anythingInLayer = true;
-    for(let curDepth = 0; anythingInLayer && curDepth >= depth; curDepth -= stepDown){
+    let iterations = 0;
+    for(let curDepth = 0; anythingInLayer && curDepth > depth; curDepth -= stepDown){
         const botDepth = curDepth - stepDown;
-        for(let i = 1; i < path.length; ++i){
-            let anythingInLayer = true;
+        anythingInLayer = false;
+        finalPoints.push(new Point3D(path[0].x, path[0].y, SAFE_HEIGHT));
+        for(let i = 0; i < path.length; ++i){
             // quick access
-            let lastPoint = path[i - 1];
+            let lastPoint = (i == 0) ? finalPoints[0]: path[i - 1];
             let curPoint = path[i];
-            // case inside stepdown simply add to list
-            if(curPoint.z > botDepth && curPoint.z <= curDepth &&
-                lastPoint.z > botDepth && curPoint.z <= curDepth){
-                finalPoints.push(curPoint);
-            }
-            // case of finding first point to dive in again
-            else if(curPoint.z > botDepth && curPoint.z <= curDepth &&
-                (lastPoint.z > curDepth || lastPoint.z <= botDepth)){
-                let anythingInLayer = true;
-                // NOTE: last point the the final points array is always above the 0 plane
-                let z = lastPoint.z <= curDepth ? botDepth: curDepth;
+
+            // handle top step in and out (drive down to intersection point with top plane)
+            if(curPoint.z < curDepth && lastPoint.z >= curDepth ||  // step in
+                curPoint.z >= curDepth && lastPoint.z < curDepth){
+                let z = curDepth;
                 let t = (z - curPoint.z) / (lastPoint.z - curPoint.z);
                 let curX = t * lastPoint.x + (1 - t) * curPoint.x;
                 let curY = t * lastPoint.y + (1 - t) * curPoint.y;
-                finalPoints.push(new Point3D(curX, curY, SAFE_HEIGHT)); //drive to new pos
-                finalPoints.push(new Point3D(curX, curY, curDepth));    //entry height and pos
-                finalPoints.push(curPoint);                             //current position
+                
+                if(curPoint.z < curDepth && lastPoint.z >= curDepth)
+                    finalPoints.push(new Point3D(curX, curY, SAFE_HEIGHT));
+                finalPoints.push(new Point3D(curX, curY, curDepth));
+                if(curPoint.z >= curDepth && lastPoint.z < curDepth)
+                    finalPoints.push(new Point3D(curX, curY, SAFE_HEIGHT));
+
+                anythingInLayer = true;
             }
-            //case of leaving the current step down area
-            else if((curPoint.z <= botDepth || curPoint.z > curDepth) &&
-                lastPoint.z > botDepth && lastPoint.z <= curDepth){
-                let anythingInLayer = true;
-                // NOTE: point after step out is always livet above the 0 plane for consecutive points
-                let z = lastPoint.z <= curDepth ? botDepth: curDepth;
+            // handle bot step out and step in (add point at bot depth plane intersection)
+            if(curPoint.z < botDepth && lastPoint.z >= botDepth || // step out
+                curPoint.z >= botDepth && lastPoint.z < botDepth){ // step in
+                let z = botDepth;
                 let t = (z - curPoint.z) / (lastPoint.z - curPoint.z);
                 let curX = t * lastPoint.x + (1 - t) * curPoint.x;
                 let curY = t * lastPoint.y + (1 - t) * curPoint.y;
-                finalPoints.push(new Point3D(curX, curY, curDepth));    //end point before lifting
-                finalPoints.push(new Point3D(curX, curY, SAFE_HEIGHT)); //lifting the router for travel
+                finalPoints.push(new Point3D(curX, curY, botDepth));
+
+                anythingInLayer = true;
             }
-            else if((curPoint.z <= botDepth || curPoint.z > curDepth) &&
-                (lastPoint.z <= botDepth || lastPoint.z > curDepth)){
-                //Nothing to do ...
-            }
-            else{
-                throw "Forgot some case for points: " + JSON.stringify(lastPoint) + "\n" + JSON.stringify(curPoint) + "\nFor depth range " + curDepth + " to " + botDepth;
+
+            // add the current point if lower than the curDepth, clamp to bot depth
+            if(curPoint.z <= curDepth){
+                finalPoints.push(new Point3D(curPoint.x, curPoint.y, Math.max(curPoint.z, botDepth)));
+
+                anythingInLayer = true;
             }
         }
-        anythingInLayer = false;
+        endPoint = path[path.length - 1];
+        finalPoints.push(new Point3D(endPoint.x, endPoint.y, SAFE_HEIGHT));
+        ++iterations;
     }
+    console.log("Job uses " + iterations + " step downs");
     return finalPoints;
 }
 
@@ -216,7 +219,6 @@ function createLinearPaths(createLinearPathCommand, workWidth, workHeight, workD
     }
     let postProcessParameters = {depth : workDepth, stepdown: createLinearPathCommand.stepdown};
     let depths = get3dDepths(workWidth, workHeight, workDepth, image, slicedLines, tool);
-    return depths;
     return postProcessPath(depths, postProcessParameters);
 }
 
@@ -269,7 +271,8 @@ function createCircularPath(createPathCommand, workWidth, workHeight, workDepth,
         }
         curRadius += lineWidth; //increasing the lineWidth for the next loop
     }
-    return get3dDepths(workWidth, workHeight, workDepth, image, slicedLines, tool);
+    let depths = get3dDepths(workWidth, workHeight, workDepth, image, slicedLines, tool);
+    return postProcessPath(depths, postProcessParameters);
 }
 
 function createContourPath(createPathCommand, workWidth, workHeight, workDepth, image, tools){

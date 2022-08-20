@@ -26,4 +26,4 @@ If no internet connection can be established simply download all source files by
 or clicking the download as `.zip` button.
 ![Download zip](images/download_zip.png)
 
-Unpack the downloaded `.zip` file and double click on ImageGraver.html. The website should then be opened in your browser.
+Unpack the downloaded `.zip` file and double click on `ImageGraver.html`. The website should then be opened in your browser.
