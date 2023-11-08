@@ -27,3 +27,13 @@ or clicking the download as `.zip` button.
 ![Download zip](images/download_zip.png)
 
 Unpack the downloaded `.zip` file and double click on `ImageGraver.html`. The website should then be opened in your browser.
+
+## Roadmap
+
+In the future i plan to include the following improvements/extensions:
+
+- Add V-carving like F-engrave does, will depend on potrace (js port available and performant) for image to svg conversion
+- Extend Info boxes for the task graph in the top of the window to include the output data format (RGB, GRAY, SVG). This wil also be needed to properly convey the information to the user to be able to use v-carving
+- Increase the amount of image operations available (eg. denoising)
+- Add output path reduction for all paths (needed especially for relief path creation)
+- Maybe automatically avoid to create as much paths for relief
